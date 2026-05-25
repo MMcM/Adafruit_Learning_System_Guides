@@ -71,7 +71,7 @@ CLOCK_SYNC_INTERVAL = 6 * 60 * 60
 # used for the 'Last checked' display, not predictions, so it's not
 # especially disruptive if missing.
 # pylint: disable=bare-except
-TIME_ZONE = getenv('timezone') # e.g. 'America/New_York'
+TIME_ZONE = getenv('TIMEZONE') # e.g. 'America/New_York'
 
 
 # SOME UTILITY FUNCTIONS ---------------------------------------------------
@@ -106,13 +106,13 @@ def parse_time(timestring, is_dst=-1):
     date_time = timestring.split('T')        # Separate into date and time
     year_month_day = date_time[0].split('-') # Separate time into Y/M/D
     hour_minute_second = date_time[1].split('+')[0].split('-')[0].split(':')
-    return time.struct_time(int(year_month_day[0]),
-                            int(year_month_day[1]),
-                            int(year_month_day[2]),
-                            int(hour_minute_second[0]),
-                            int(hour_minute_second[1]),
-                            int(hour_minute_second[2].split('.')[0]),
-                            -1, -1, is_dst)
+    return time.struct_time((int(year_month_day[0]),
+                             int(year_month_day[1]),
+                             int(year_month_day[2]),
+                             int(hour_minute_second[0]),
+                             int(hour_minute_second[1]),
+                             int(hour_minute_second[2].split('.')[0]),
+                             -1, -1, is_dst))
 
 def update_time(timezone=None):
     """ Update system date/time from WorldTimeAPI public server;
@@ -227,7 +227,8 @@ LAST_QUERY_TIME = -QUERY_INTERVAL
 
 # MAIN LOOP ----------------------------------------------------------------
 
-while True:
+def main_step():
+    global LAST_SYNC_TIME, LAST_QUERY_TIME
 
     # Periodically sync clock with time server
     if time.monotonic() - LAST_SYNC_TIME >= CLOCK_SYNC_INTERVAL:
@@ -279,6 +280,12 @@ while True:
         GROUP[group_index].anchored_position = (DISPLAY.width - 1,
                                                 baseline + offset)
 
-    DISPLAY.refresh()
-    gc.collect()
-    time.sleep(60) # Update predictions about once a minute
+def main():
+    while True:
+        main_step()
+        DISPLAY.refresh()
+        gc.collect()
+        time.sleep(60) # Update predictions about once a minute
+
+if __name__ == '__main__':
+    main()
