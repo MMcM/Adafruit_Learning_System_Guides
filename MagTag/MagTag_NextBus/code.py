@@ -22,7 +22,15 @@ from adafruit_magtag.magtag import Network
 from adafruit_magtag.magtag import Peripherals
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
-from nextbus import NextBus
+
+if True:
+    from nextbus import NextBus as Stop
+else:
+    from open511 import Open511
+    OPEN511_API_KEY = getenv("OPEN511_API_KEY")
+    def Stop(network, agency, line, stop, data, max_predictions, minimum_time):
+        return Open511(network, OPEN511_API_KEY, agency, line, stop, data,
+                       max_predictions, minimum_time)
 
 # Get WiFi details, ensure these are setup in settings.toml
 ssid = getenv("CIRCUITPY_WIFI_SSID")
@@ -178,8 +186,8 @@ time.sleep(5) # Don't allow another refresh() too soon
 STOP_LIST = []
 MAX_SIZE = (0, 0) # Pixel dimensions of largest route number
 for stop in STOPS:
-    STOP_LIST.append(NextBus(NETWORK, stop[0], stop[1], stop[2], None,
-                             MAX_PREDICTIONS, MINIMUM_TIME))
+    STOP_LIST.append(Stop(NETWORK, stop[0], stop[1], stop[2], None,
+                          MAX_PREDICTIONS, MINIMUM_TIME))
     TEXT = Label(FONT_LARGE, text=stop[1], color=0)
     # Keep track of the largest route label for positioning things later
     MAX_SIZE = (max(TEXT.width, MAX_SIZE[0]), max(TEXT.height, MAX_SIZE[1]))
